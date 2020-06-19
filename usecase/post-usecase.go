@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"summer-web/models"
 	"summer-web/post/repository"
 )
@@ -29,5 +30,18 @@ func (*postUsecase) GetPosts() ([]models.Post, error) {
 
 // AddPost accesses repo to add a post record to database
 func (*postUsecase) AddPost(post *models.Post) error {
+	if err := validatePost(post); err != nil {
+		return err
+	}
 	return postRepo.AddPost(post)
+}
+
+func validatePost(post *models.Post) error {
+	if post.Caption == "" {
+		return fmt.Errorf("pg: can't be null \"posts_caption_key\"")
+	}
+	if post.UserID == 0 {
+		return fmt.Errorf("pg: can't be null \"posts_user_id_key\"")
+	}
+	return nil
 }

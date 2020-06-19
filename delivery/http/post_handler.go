@@ -30,8 +30,9 @@ func (*postDelivery) GetPosts(resp http.ResponseWriter, req *http.Request) {
 	posts, err := postUsecase.GetPosts()
 
 	if err != nil {
+		key, value := trimError(err)
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		resp.Write([]byte(`{` + key + `:` + value + `}`))
 		return
 	}
 
@@ -46,16 +47,18 @@ func (*postDelivery) AddPost(resp http.ResponseWriter, req *http.Request) {
 	err := json.NewDecoder(req.Body).Decode(&newPost)
 
 	if err != nil {
+		key, value := trimError(err)
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		resp.Write([]byte(`{` + key + `:` + value + `}`))
 		return
 	}
 
 	err = postUsecase.AddPost(&newPost)
 
 	if err != nil {
+		key, value := trimError(err)
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		resp.Write([]byte(`{` + key + `:` + value + `}`))
 		return
 	}
 

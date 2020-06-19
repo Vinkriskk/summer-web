@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"summer-web/models"
 	"summer-web/usecase"
 
@@ -39,8 +40,9 @@ func (*userDelivery) GetUserByID(resp http.ResponseWriter, req *http.Request) {
 	id, err := strconv.Atoi(vars["id"])
 
 	if err != nil {
+		key, value := trimError(err)
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		resp.Write([]byte(`{` + key + `:` + value + `}`))
 		return
 	}
 
@@ -51,8 +53,9 @@ func (*userDelivery) GetUserByID(resp http.ResponseWriter, req *http.Request) {
 	err = userUsecase.GetUserByID(uid, &user)
 
 	if err != nil {
+		key, value := trimError(err)
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		resp.Write([]byte(`{` + key + `:` + value + `}`))
 		return
 	}
 
@@ -69,16 +72,18 @@ func (*userDelivery) AddUser(resp http.ResponseWriter, req *http.Request) {
 	err := json.NewDecoder(req.Body).Decode(&newUser)
 
 	if err != nil {
+		key, value := trimError(err)
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		resp.Write([]byte(`{` + key + `:` + value + `}`))
 		return
 	}
 
 	err = userUsecase.AddUser(&newUser)
 
 	if err != nil {
+		key, value := trimError(err)
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		resp.Write([]byte(`{` + key + `:` + value + `}`))
 		return
 	}
 
@@ -105,8 +110,9 @@ func (*userDelivery) UpdateUser(resp http.ResponseWriter, req *http.Request) {
 
 	err = userUsecase.GetUserByID(userID, &user)
 	if err != nil {
+		key, value := trimError(err)
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		resp.Write([]byte(`{` + key + `:` + value + `}`))
 		return
 	}
 
@@ -114,8 +120,9 @@ func (*userDelivery) UpdateUser(resp http.ResponseWriter, req *http.Request) {
 	err = userUsecase.UpdateUser(user)
 
 	if err != nil {
+		key, value := trimError(err)
 		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		resp.Write([]byte(`{` + key + `:` + value + `}`))
 		return
 	}
 
@@ -145,4 +152,19 @@ func (*userDelivery) Login(resp http.ResponseWriter, req *http.Request) {
 
 func sanitizePassword(user *models.User) {
 	user.Password = ""
+}
+
+func trimError(err error) (string, string) {
+	initial := err.Error()
+
+	key := strings.Split(initial, "\"")[1]
+	key = "\"" + key + "\""
+
+	initial = strings.Replace(initial, key, "", 1)
+
+	value := strings.Split(initial, ": ")[1]
+
+	value = "\"" + value[0:len(value)-1] + "\""
+
+	return key, value
 }

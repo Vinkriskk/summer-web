@@ -34,10 +34,16 @@ func (*userUsecase) GetUserByID(id uint, user *models.User) error {
 }
 
 func (*userUsecase) AddUser(user *models.User) error {
+	if err := validateUser(user); err != nil {
+		return err
+	}
 	return userRepo.AddUser(user)
 }
 
 func (*userUsecase) UpdateUser(updatedData models.User) error {
+	if err := validateUser(&updatedData); err != nil {
+		return err
+	}
 	return userRepo.UpdateUser(updatedData)
 }
 
@@ -64,4 +70,17 @@ func createToken(id uint) (string, error) {
 		return "", err
 	}
 	return token, err
+}
+
+func validateUser(user *models.User) error {
+	if user.Email == "" {
+		return fmt.Errorf("pg: can't be null \"users_email_key\"")
+	}
+	if user.Name == "" {
+		return fmt.Errorf("pg: can't be null \"users_name_key\"")
+	}
+	if user.Username == "" {
+		return fmt.Errorf("pg: can't be null \"users_username_key\"")
+	}
+	return nil
 }

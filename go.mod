@@ -8,4 +8,5 @@ require (
 	github.com/jinzhu/gorm v1.9.12
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/lib/pq v1.7.0 // indirect
+	github.com/stretchr/testify v1.6.1 // indirect
 )
