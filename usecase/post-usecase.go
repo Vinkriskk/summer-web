@@ -23,7 +23,7 @@ func NewPostUsecase(repo repository.PostRepository) PostUsecase {
 	if repo != nil {
 		postRepo = repo
 	} else {
-		postRepo = repository.NewPostRepository()
+		postRepo = repository.NewPostRepository(nil)
 	}
 	return &postUsecase{}
 }

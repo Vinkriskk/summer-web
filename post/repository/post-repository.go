@@ -29,26 +29,37 @@ func init() {
 	db.AutoMigrate(&models.Post{})
 }
 
-type repo struct{}
+type repo struct {
+	db *gorm.DB
+}
 
 // NewPostRepository create a new post repository to fiddle around with database
-func NewPostRepository() PostRepository {
-	return &repo{}
+func NewPostRepository(db *gorm.DB) PostRepository {
+	if db == nil {
+		gdb, err := gorm.Open("postgres", os.Getenv("DB_CONNECTION_STRING"))
+		if err != nil {
+			fmt.Println(err.Error())
+			panic("Could not connect to database")
+		}
+
+		return &repo{db: gdb}
+	}
+	return &repo{db: db}
 }
 
 // GetPosts returns all post in database or an error if there is an error
-func (*repo) GetPosts() ([]models.Post, error) {
-	db, err := gorm.Open("postgres", os.Getenv("DB_CONNECTION_STRING"))
-	if err != nil {
-		fmt.Println(err.Error())
-		panic("Could not connect to database")
-	}
+func (r *repo) GetPosts() ([]models.Post, error) {
+	// db, err := gorm.Open("postgres", os.Getenv("DB_CONNECTION_STRING"))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	panic("Could not connect to database")
+	// }
 
-	defer db.Close()
+	// defer db.Close()
 
 	var posts []models.Post
 
-	err = db.Find(&posts).Error
+	err := r.db.Find(&posts).Error
 
 	if err != nil {
 		return nil, err
@@ -58,14 +69,14 @@ func (*repo) GetPosts() ([]models.Post, error) {
 }
 
 // AddPost adds post into database, returns an error instead if there is an error
-func (*repo) AddPost(post *models.Post) error {
-	db, err := gorm.Open("postgres", os.Getenv("DB_CONNECTION_STRING"))
-	if err != nil {
-		fmt.Println(err.Error())
-		panic("Could not connect to database")
-	}
+func (r *repo) AddPost(post *models.Post) error {
+	// db, err := gorm.Open("postgres", os.Getenv("DB_CONNECTION_STRING"))
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// 	panic("Could not connect to database")
+	// }
 
-	defer db.Close()
+	// defer db.Close()
 
-	return db.Create(&post).Error
+	return r.db.Create(&post).Error
 }

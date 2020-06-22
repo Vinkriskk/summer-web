@@ -147,7 +147,7 @@ func (*userDelivery) Login(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	resp.WriteHeader(http.StatusOK)
-	resp.Write([]byte(token))
+	resp.Write([]byte(`{"auth_token": ` + token + `}`))
 }
 
 func sanitizePassword(user *models.User) {

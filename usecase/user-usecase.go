@@ -30,7 +30,7 @@ func NewUserUsecase(repo repository.UserRepository) UserUsecase {
 	if repo != nil {
 		userRepo = repo
 	} else {
-		userRepo = repository.NewUserRepository()
+		userRepo = repository.NewUserRepository(nil)
 	}
 	return &userUsecase{}
 }

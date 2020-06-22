@@ -32,60 +32,38 @@ func init() {
 	db.AutoMigrate(&models.User{})
 }
 
-type repo struct{}
+type repo struct {
+	db *gorm.DB
+}
 
 // NewUserRepository create a new post repository to fiddle around with database
-func NewUserRepository() UserRepository {
-	return &repo{}
+func NewUserRepository(db *gorm.DB) UserRepository {
+	if db == nil {
+		gdb, err := gorm.Open("postgres", os.Getenv("DB_CONNECTION_STRING"))
+		if err != nil {
+			fmt.Println(err.Error())
+			panic("Could not connect to database")
+		}
+		return &repo{db: gdb}
+	}
+	return &repo{db: db}
 }
 
 // GetUserByID returns an error if there is any, modifies the user parameter with the found record
-func (*repo) GetUserByID(id uint, user *models.User) error {
-	db, err := gorm.Open("postgres", os.Getenv("DB_CONNECTION_STRING"))
-	if err != nil {
-		fmt.Println(err.Error())
-		panic("Could not connect to database")
-	}
-
-	defer db.Close()
-
-	return db.Where("id = ?", id).Find(&user).Error
+func (r *repo) GetUserByID(id uint, user *models.User) error {
+	return r.db.Where("id = ?", id).Find(&user).Error
 }
 
 // AddUser returns an error if there is any, otherwise creates a new user record into database
-func (*repo) AddUser(user *models.User) error {
-	db, err := gorm.Open("postgres", os.Getenv("DB_CONNECTION_STRING"))
-	if err != nil {
-		fmt.Println(err.Error())
-		panic("Could not connect to database")
-	}
-
-	defer db.Close()
-
-	return db.Create(&user).Error
+func (r *repo) AddUser(user *models.User) error {
+	return r.db.Create(&user).Error
 }
 
 // GetUserByUsername returns an error if there is any, otherwise modifies the user parameter with the found record
-func (*repo) GetUserByUsername(username string, user *models.User) error {
-	db, err := gorm.Open("postgres", os.Getenv("DB_CONNECTION_STRING"))
-	if err != nil {
-		fmt.Println(err.Error())
-		panic("Could not connect to database")
-	}
-
-	defer db.Close()
-
-	return db.Where("username = ?", username).Find(&user).Error
+func (r *repo) GetUserByUsername(username string, user *models.User) error {
+	return r.db.Where("username = ?", username).Find(&user).Error
 }
 
-func (*repo) UpdateUser(updatedData models.User) error {
-	db, err := gorm.Open("postgres", os.Getenv("DB_CONNECTION_STRING"))
-	if err != nil {
-		fmt.Println(err.Error())
-		panic("Could not connect to database")
-	}
-
-	defer db.Close()
-
-	return db.Model(&updatedData).Updates(updatedData).Error
+func (r *repo) UpdateUser(updatedData models.User) error {
+	return r.db.Model(&updatedData).Updates(updatedData).Error
 }
