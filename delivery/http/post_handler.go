@@ -15,14 +15,15 @@ type PostDelivery interface {
 
 type postDelivery struct{}
 
+var (
+	postUsecase usecase.PostUsecase
+)
+
 // NewPostDelivery returns new postDelivery struct that implements PostDelivery
 func NewPostDelivery() PostDelivery {
+	postUsecase = usecase.NewPostUsecase(nil)
 	return &postDelivery{}
 }
-
-var (
-	postUsecase usecase.PostUsecase = usecase.NewPostUsecase()
-)
 
 func (*postDelivery) GetPosts(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Set("Content-Type", "application/json")

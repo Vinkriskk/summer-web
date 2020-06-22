@@ -30,7 +30,7 @@ func NewUserDelivery() UserDelivery {
 }
 
 var (
-	userUsecase usecase.UserUsecase = usecase.NewUserUsecase()
+	userUsecase usecase.UserUsecase = usecase.NewUserUsecase(nil)
 )
 
 func (*userDelivery) GetUserByID(resp http.ResponseWriter, req *http.Request) {

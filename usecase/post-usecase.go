@@ -13,13 +13,18 @@ type PostUsecase interface {
 }
 
 var (
-	postRepo repository.PostRepository = repository.NewPostRepository()
+	postRepo repository.PostRepository
 )
 
 type postUsecase struct{}
 
 // NewPostUsecase creates a new usecase to fiddle around with repository
-func NewPostUsecase() PostUsecase {
+func NewPostUsecase(repo repository.PostRepository) PostUsecase {
+	if repo != nil {
+		postRepo = repo
+	} else {
+		postRepo = repository.NewPostRepository()
+	}
 	return &postUsecase{}
 }
 

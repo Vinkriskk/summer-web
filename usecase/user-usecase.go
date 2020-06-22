@@ -3,6 +3,7 @@ package usecase
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"summer-web/models"
 	"summer-web/user/repository"
 	"time"
@@ -19,13 +20,18 @@ type UserUsecase interface {
 }
 
 var (
-	userRepo repository.UserRepository = repository.NewUserRepository()
+	userRepo repository.UserRepository
 )
 
 type userUsecase struct{}
 
 // NewUserUsecase creates a new usecase to fiddle around with repository
-func NewUserUsecase() UserUsecase {
+func NewUserUsecase(repo repository.UserRepository) UserUsecase {
+	if repo != nil {
+		userRepo = repo
+	} else {
+		userRepo = repository.NewUserRepository()
+	}
 	return &userUsecase{}
 }
 
@@ -73,6 +79,8 @@ func createToken(id uint) (string, error) {
 }
 
 func validateUser(user *models.User) error {
+	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+
 	if user.Email == "" {
 		return fmt.Errorf("pg: can't be null \"users_email_key\"")
 	}
@@ -81,6 +89,9 @@ func validateUser(user *models.User) error {
 	}
 	if user.Username == "" {
 		return fmt.Errorf("pg: can't be null \"users_username_key\"")
+	}
+	if !re.MatchString(user.Email) {
+		return fmt.Errorf("error: invalid \"users_email_key\"")
 	}
 	return nil
 }
