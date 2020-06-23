@@ -2,9 +2,13 @@ package delivery
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"summer-web/models"
 	"summer-web/usecase"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 // PostDelivery interface acts as Post Controller
@@ -20,8 +24,12 @@ var (
 )
 
 // NewPostDelivery returns new postDelivery struct that implements PostDelivery
-func NewPostDelivery() PostDelivery {
-	postUsecase = usecase.NewPostUsecase(nil)
+func NewPostDelivery(usecasePost usecase.PostUsecase) PostDelivery {
+	if postUsecase != nil {
+		postUsecase = usecasePost
+	} else {
+		postUsecase = usecase.NewPostUsecase(nil)
+	}
 	return &postDelivery{}
 }
 
@@ -48,11 +56,21 @@ func (*postDelivery) AddPost(resp http.ResponseWriter, req *http.Request) {
 	err := json.NewDecoder(req.Body).Decode(&newPost)
 
 	if err != nil {
-		key, value := trimError(err)
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{` + key + `:` + value + `}`))
-		return
+		panic(err)
 	}
+
+	token, err := jwt.Parse(req.Header["Authorization"][0], func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method")
+		}
+		return []byte(os.Getenv("SECRET_JWT_KEY")), nil
+	})
+
+	claims := token.Claims.(jwt.MapClaims)
+
+	userID := uint(claims["user_id"].(float64))
+
+	newPost.UserID = userID
 
 	err = postUsecase.AddPost(&newPost)
 

@@ -24,14 +24,19 @@ type UserDelivery interface {
 
 type userDelivery struct{}
 
+var (
+	userUsecase usecase.UserUsecase
+)
+
 // NewUserDelivery returns new userDelivery struct that implements UserDelivery
-func NewUserDelivery() UserDelivery {
+func NewUserDelivery(usecaseUser usecase.UserUsecase) UserDelivery {
+	if usecaseUser != nil {
+		userUsecase = usecaseUser
+	} else {
+		userUsecase = usecase.NewUserUsecase(nil)
+	}
 	return &userDelivery{}
 }
-
-var (
-	userUsecase usecase.UserUsecase = usecase.NewUserUsecase(nil)
-)
 
 func (*userDelivery) GetUserByID(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Set("Content-Type", "application/json")
@@ -43,6 +48,7 @@ func (*userDelivery) GetUserByID(resp http.ResponseWriter, req *http.Request) {
 		key, value := trimError(err)
 		resp.WriteHeader(http.StatusInternalServerError)
 		resp.Write([]byte(`{` + key + `:` + value + `}`))
+		fmt.Println(err)
 		return
 	}
 
@@ -72,10 +78,7 @@ func (*userDelivery) AddUser(resp http.ResponseWriter, req *http.Request) {
 	err := json.NewDecoder(req.Body).Decode(&newUser)
 
 	if err != nil {
-		key, value := trimError(err)
-		resp.WriteHeader(http.StatusInternalServerError)
-		resp.Write([]byte(`{` + key + `:` + value + `}`))
-		return
+		panic(err)
 	}
 
 	err = userUsecase.AddUser(&newUser)
@@ -147,7 +150,7 @@ func (*userDelivery) Login(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	resp.WriteHeader(http.StatusOK)
-	resp.Write([]byte(`{"auth_token": ` + token + `}`))
+	resp.Write([]byte(`{"auth_token": "` + token + `"}`))
 }
 
 func sanitizePassword(user *models.User) {
