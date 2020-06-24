@@ -29,11 +29,11 @@ var (
 )
 
 // NewUserDelivery returns new userDelivery struct that implements UserDelivery
-func NewUserDelivery(usecaseUser usecase.UserUsecase) UserDelivery {
-	if usecaseUser != nil {
-		userUsecase = usecaseUser
+func NewUserDelivery(usecaseUser ...usecase.UserUsecase) UserDelivery {
+	if len(usecaseUser) > 0 {
+		userUsecase = usecaseUser[0]
 	} else {
-		userUsecase = usecase.NewUserUsecase(nil)
+		userUsecase = usecase.NewUserUsecase()
 	}
 	return &userDelivery{}
 }
@@ -75,10 +75,12 @@ func (*userDelivery) AddUser(resp http.ResponseWriter, req *http.Request) {
 
 	var newUser models.User
 
-	err := json.NewDecoder(req.Body).Decode(&newUser)
+	err := addDataToUser(&newUser, req)
 
 	if err != nil {
-		panic(err)
+		resp.WriteHeader(http.StatusInternalServerError)
+		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		return
 	}
 
 	err = userUsecase.AddUser(&newUser)
@@ -119,7 +121,14 @@ func (*userDelivery) UpdateUser(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	json.NewDecoder(req.Body).Decode(&user)
+	err = addDataToUser(&user, req)
+
+	if err != nil {
+		resp.WriteHeader(http.StatusInternalServerError)
+		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		return
+	}
+
 	err = userUsecase.UpdateUser(user)
 
 	if err != nil {
@@ -139,7 +148,8 @@ func (*userDelivery) Login(resp http.ResponseWriter, req *http.Request) {
 
 	var loginData models.User
 
-	json.NewDecoder(req.Body).Decode(&loginData)
+	loginData.Username = req.FormValue("username")
+	loginData.Password = req.FormValue("password")
 
 	token, err := userUsecase.Login(loginData)
 
@@ -170,4 +180,40 @@ func trimError(err error) (string, string) {
 	value = "\"" + value[0:len(value)-1] + "\""
 
 	return key, value
+}
+
+func addDataToUser(user *models.User, data *http.Request) error {
+	var err error
+
+	if data.FormValue("follower_count") != "" {
+		user.FollowerCount, err = strconv.Atoi(data.FormValue("follower_count"))
+		if err != nil {
+			return err
+		}
+	}
+
+	if data.FormValue("following_count") != "" {
+		user.FollowingCount, err = strconv.Atoi(data.FormValue("following_count"))
+		if err != nil {
+			return err
+		}
+	}
+
+	if data.FormValue("password") != "" {
+		user.Password = data.FormValue("password")
+	}
+
+	if data.FormValue("username") != "" {
+		user.Username = data.FormValue("username")
+	}
+
+	if data.FormValue("name") != "" {
+		user.Name = data.FormValue("name")
+	}
+
+	if data.FormValue("email") != "" {
+		user.Email = data.FormValue("email")
+	}
+
+	return nil
 }

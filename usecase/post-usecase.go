@@ -19,9 +19,9 @@ var (
 type postUsecase struct{}
 
 // NewPostUsecase creates a new usecase to fiddle around with repository
-func NewPostUsecase(repo repository.PostRepository) PostUsecase {
-	if repo != nil {
-		postRepo = repo
+func NewPostUsecase(repo ...repository.PostRepository) PostUsecase {
+	if len(repo) > 0 {
+		postRepo = repo[0]
 	} else {
 		postRepo = repository.NewPostRepository(nil)
 	}

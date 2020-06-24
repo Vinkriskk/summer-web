@@ -24,11 +24,11 @@ var (
 )
 
 // NewPostDelivery returns new postDelivery struct that implements PostDelivery
-func NewPostDelivery(usecasePost usecase.PostUsecase) PostDelivery {
-	if postUsecase != nil {
-		postUsecase = usecasePost
+func NewPostDelivery(usecasePost ...usecase.PostUsecase) PostDelivery {
+	if len(usecasePost) > 0 {
+		postUsecase = usecasePost[0]
 	} else {
-		postUsecase = usecase.NewPostUsecase(nil)
+		postUsecase = usecase.NewPostUsecase()
 	}
 	return &postDelivery{}
 }
@@ -53,11 +53,7 @@ func (*postDelivery) AddPost(resp http.ResponseWriter, req *http.Request) {
 
 	var newPost models.Post
 
-	err := json.NewDecoder(req.Body).Decode(&newPost)
-
-	if err != nil {
-		panic(err)
-	}
+	addDataToPost(&newPost, req)
 
 	token, err := jwt.Parse(req.Header["Authorization"][0], func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -65,6 +61,12 @@ func (*postDelivery) AddPost(resp http.ResponseWriter, req *http.Request) {
 		}
 		return []byte(os.Getenv("SECRET_JWT_KEY")), nil
 	})
+
+	if err != nil {
+		resp.WriteHeader(http.StatusInternalServerError)
+		resp.Write([]byte(`{"error": "` + err.Error() + `"}`))
+		return
+	}
 
 	claims := token.Claims.(jwt.MapClaims)
 
@@ -82,4 +84,8 @@ func (*postDelivery) AddPost(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	json.NewEncoder(resp).Encode(newPost)
+}
+
+func addDataToPost(post *models.Post, data *http.Request) {
+	post.Caption = data.FormValue("caption")
 }

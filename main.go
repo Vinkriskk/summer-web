@@ -19,8 +19,8 @@ func main() {
 	router := mux.NewRouter()
 
 	var httpMiddleware middleware.Middleware = middleware.NewMiddleware()
-	var postDelivery delivery.PostDelivery = delivery.NewPostDelivery(nil)
-	var userDelivery delivery.UserDelivery = delivery.NewUserDelivery(nil)
+	var postDelivery delivery.PostDelivery = delivery.NewPostDelivery()
+	var userDelivery delivery.UserDelivery = delivery.NewUserDelivery()
 
 	const port string = ":8000"
 

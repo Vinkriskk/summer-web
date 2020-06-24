@@ -3,6 +3,7 @@ package delivery
 import (
 	"bytes"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"summer-web/models"
@@ -59,18 +60,28 @@ func TestGetPosts(t *testing.T) {
 
 	json.NewDecoder(resp.Body).Decode(&posts)
 
-	// mockUsecase.AssertExpectations(t)
+	mockUsecase.AssertExpectations(t)
 	assert.Equal(t, http.StatusOK, resp.Code)
-	// assert.Equal(t, post.Caption, posts[0].Caption)
-	// assert.Equal(t, post.UserID, posts[0].UserID)
+	assert.Equal(t, post.Caption, posts[0].Caption)
+	assert.Equal(t, post.UserID, posts[0].UserID)
 }
 
 func TestAddPost(t *testing.T) {
-	jsonStr := []byte(`{
-		"caption": "hello world!"
-	}`)
+	buf := new(bytes.Buffer)
 
-	req, err := http.NewRequest("POST", "/posts", bytes.NewBuffer(jsonStr))
+	w := multipart.NewWriter(buf)
+
+	caption, err := w.CreateFormField("caption")
+
+	if err != nil {
+		panic(err)
+	}
+
+	caption.Write([]byte("hello world!"))
+
+	w.Close()
+
+	req, err := http.NewRequest("POST", "/posts", buf)
 
 	if err != nil {
 		panic(err)
@@ -83,7 +94,7 @@ func TestAddPost(t *testing.T) {
 	}
 
 	req.Header.Set("Authorization", token)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	resp := httptest.NewRecorder()
 	mockUsecase := new(PostMockUsecase)

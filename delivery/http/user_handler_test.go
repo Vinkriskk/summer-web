@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -46,17 +47,29 @@ func (mock *UserMockUsecase) UpdateUser(updatedData models.User) error {
 }
 
 func TestLoginSuccess(t *testing.T) {
-	jsonStr := []byte(`{
-		"username": "us1",
-		"password": "pw1"
-	}`)
-	req, err := http.NewRequest("POST", "/login", bytes.NewBuffer(jsonStr))
+	buf := new(bytes.Buffer)
+
+	w := multipart.NewWriter(buf)
+
+	err := w.WriteField("username", "us1")
+	if err != nil {
+		panic(err)
+	}
+
+	err = w.WriteField("password", "pw1")
+	if err != nil {
+		panic(err)
+	}
+
+	w.Close()
+
+	req, err := http.NewRequest("POST", "/login", buf)
 
 	if err != nil {
 		panic(err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	resp := httptest.NewRecorder()
 	mockUsecase := new(UserMockUsecase)
@@ -72,25 +85,39 @@ func TestLoginSuccess(t *testing.T) {
 		Error     string `json:"error"`
 	}{}
 
+	mockUsecase.AssertExpectations(t)
+
 	json.NewDecoder(resp.Body).Decode(&receivedResponse)
 
 	assert.Equal(t, http.StatusOK, resp.Code)
-	assert.NotEqual(t, "valid token", receivedResponse.AuthToken)
+	assert.Equal(t, "valid token", receivedResponse.AuthToken)
 	assert.Equal(t, "", receivedResponse.Error)
 }
 
 func TestLoginFailed(t *testing.T) {
-	jsonStr := []byte(`{
-		"username": "us1",
-		"password": "pw1"
-	}`)
-	req, err := http.NewRequest("POST", "/login", bytes.NewBuffer(jsonStr))
+	buf := new(bytes.Buffer)
+
+	w := multipart.NewWriter(buf)
+
+	err := w.WriteField("username", "us1")
+	if err != nil {
+		panic(err)
+	}
+
+	err = w.WriteField("password", "pw1")
+	if err != nil {
+		panic(err)
+	}
+
+	w.Close()
+
+	req, err := http.NewRequest("POST", "/login", buf)
 
 	if err != nil {
 		panic(err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	resp := httptest.NewRecorder()
 	mockUsecase := new(UserMockUsecase)
@@ -114,22 +141,48 @@ func TestLoginFailed(t *testing.T) {
 }
 
 func TestSignUp(t *testing.T) {
-	jsonStr := []byte(`{
-		"username": "us1",
-		"password": "123",
-		"email": "assdaweee@qsd.com",
-		"name": "test",
-		"follower_count": 1,
-		"following_count": 2
-	}`)
+	buf := new(bytes.Buffer)
+	w := multipart.NewWriter(buf)
 
-	req, err := http.NewRequest("POST", "/sign_up", bytes.NewBuffer(jsonStr))
+	err := w.WriteField("username", "us1")
+	if err != nil {
+		panic(err)
+	}
+
+	err = w.WriteField("password", "123")
+	if err != nil {
+		panic(err)
+	}
+
+	err = w.WriteField("email", "asdaweee@qsd.com")
+	if err != nil {
+		panic(err)
+	}
+
+	err = w.WriteField("name", "test")
+	if err != nil {
+		panic(err)
+	}
+
+	err = w.WriteField("follower_count", "1")
+	if err != nil {
+		panic(err)
+	}
+
+	err = w.WriteField("following_count", "2")
+	if err != nil {
+		panic(err)
+	}
+
+	w.Close()
+
+	req, err := http.NewRequest("POST", "/sign_up", buf)
 
 	if err != nil {
 		panic(err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	resp := httptest.NewRecorder()
 	mockUsecase := new(UserMockUsecase)
@@ -143,6 +196,7 @@ func TestSignUp(t *testing.T) {
 
 	json.NewDecoder(resp.Body).Decode(&receivedResponse)
 
+	mockUsecase.AssertExpectations(t)
 	assert.Equal(t, http.StatusOK, resp.Code)
 	assert.Equal(t, "us1", receivedResponse.Username)
 	assert.Equal(t, "", receivedResponse.Password)
@@ -185,10 +239,18 @@ func TestGetUserByID(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
-	jsonStr := []byte(`{
-		"username": "joko"
-	}`)
-	req, err := http.NewRequest("PATCH", "/users/update", bytes.NewBuffer(jsonStr))
+	buf := new(bytes.Buffer)
+	w := multipart.NewWriter(buf)
+
+	err := w.WriteField("username", "joko")
+
+	if err != nil {
+		panic(err)
+	}
+
+	w.Close()
+
+	req, err := http.NewRequest("PATCH", "/users/update", buf)
 
 	if err != nil {
 		panic(err)
@@ -201,7 +263,7 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 	req.Header.Set("Authorization", token)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	resp := httptest.NewRecorder()
 	mockUsecase := new(UserMockUsecase)

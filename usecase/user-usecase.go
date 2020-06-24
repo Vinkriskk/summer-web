@@ -26,9 +26,9 @@ var (
 type userUsecase struct{}
 
 // NewUserUsecase creates a new usecase to fiddle around with repository
-func NewUserUsecase(repo repository.UserRepository) UserUsecase {
-	if repo != nil {
-		userRepo = repo
+func NewUserUsecase(repo ...repository.UserRepository) UserUsecase {
+	if len(repo) > 0 {
+		userRepo = repo[0]
 	} else {
 		userRepo = repository.NewUserRepository(nil)
 	}
@@ -47,9 +47,6 @@ func (*userUsecase) AddUser(user *models.User) error {
 }
 
 func (*userUsecase) UpdateUser(updatedData models.User) error {
-	if err := validateUser(&updatedData); err != nil {
-		return err
-	}
 	return userRepo.UpdateUser(updatedData)
 }
 
